@@ -10,32 +10,39 @@ CREATE TABLE PACIENTE (
     Cidade varChar(30) Not Null 
 );
 
+CREATE TABLE Numero_Telefone_Paciente(
+    pacienteCPF char(11) NOT NULL,
+    Numero_telefone char(11) Not Null,
+    PRIMARY KEY (pacienteCPF, Numero_telefone)
+);
+
 CREATE TABLE FUNCIONARIO (
     matricula char(5) Not Null PRIMARY KEY,
     CPF char(11) Not Null UNIQUE,
-    Nome varChar(50) Not Null,
-    funcao varChar(15) Not Null,
-    salario Decimal(10,2) Not Null,   
     Supervisor char(5),
+	Nome varChar(50) Not Null,
     Data_nascimento date Not Null,
-    Data_admissao date Not Null
+    Data_admissao date Not Null,
+	idCargo int Not Null,
+	percentual_bonus int Not Null
 );
 
-CREATE TABLE MEDICO (
-    Matricula char(5) PRIMARY KEY Not Null,
-    crm char(6) UNIQUE Not Null,
-    EspId int Not Null
-);
-
-CREATE TABLE REMEDIO_RECEITADO (
-    receitaId int Not Null,
-	nome varChar(25) Not Null
+CREATE TABLE CARGO (
+	id serial PRIMARY KEY Not Null,
+	funcao varchar(45) UNIQUE Not Null,
+	salario_base decimal(10,2) Not null
 );
 
 CREATE TABLE ESPECIALIDADE (
     id Serial  PRIMARY KEY   Not Null ,
     descricao Varchar(45) UNIQUE Not Null,
     preco_consulta Decimal(10,2) Not Null
+);
+
+CREATE TABLE MEDICO (
+    Matricula char(5) PRIMARY KEY Not Null,
+    crm char(6) UNIQUE Not Null,
+    EspId int Not Null
 );
 
 CREATE TABLE RECEITA(
@@ -47,17 +54,30 @@ CREATE TABLE RECEITA(
     Data_Validade date Not Null
 );
 
-CREATE TABLE Numero_Telefone_Paciente(
-    pacienteCPF char(11) NOT NULL,
-    Numero_telefone char(11) Not Null,
-    PRIMARY KEY (pacienteCPF, Numero_telefone)
+CREATE TABLE REMEDIO(
+    id serial Not Null PRIMARY KEY,
+    descricao text Not Null
 );
- 
+
+CREATE TABLE PRESCRICAO (
+    idReceita int,
+    idRemedio int,
+    PRIMARY KEY (idReceita, idRemedio)
+);
+
 ALTER TABLE PACIENTE ADD CONSTRAINT Func_Cadastrante_FK
     FOREIGN KEY (Func_Cadastrante)
     REFERENCES FUNCIONARIO (matricula)
     ON DELETE CASCADE;
+
+ALTER TABLE Numero_Telefone_Paciente ADD CONSTRAINT FK_Numero_telefone_2
+    FOREIGN KEY (pacienteCPF)
+    REFERENCES PACIENTE (cpf);
  
+ALTER TABLE FUNCIONARIO ADD CONSTRAINT Cargo_FK
+	FOREIGN KEY (idCargo)
+	REFERENCES CARGO (id);
+	
 ALTER TABLE FUNCIONARIO ADD CONSTRAINT Supervisor_FK
     FOREIGN KEY (Supervisor)
     REFERENCES FUNCIONARIO (matricula);
@@ -76,15 +96,23 @@ ALTER TABLE RECEITA ADD CONSTRAINT MatMedico_FK
     FOREIGN KEY (MatMedico)
     REFERENCES MEDICO (Matricula);
 
-ALTER TABLE REMEDIO_RECEITADO ADD CONSTRAINT receita_FK
-    FOREIGN KEY (receitaId)
-    REFERENCES RECEITA (id)
-    ON DELETE CASCADE;
- 
-ALTER TABLE RECEITA ADD CONSTRAINT FK_RECEITA_3
+ALTER TABLE RECEITA ADD CONSTRAINT CPFPacient_Fk
     FOREIGN KEY (CPFPaciente)
     REFERENCES PACIENTE (cpf);
- 
-ALTER TABLE Numero_Telefone_Paciente ADD CONSTRAINT FK_Numero_telefone_2
-    FOREIGN KEY (pacienteCPF)
-    REFERENCES PACIENTE (cpf);
+
+ALTER TABLE PRESCRICAO ADD CONSTRAINT FK_PRESCRICAO1
+    FOREIGN KEY (idRemedio)
+    REFERENCES REMEDIO (id);
+
+ALTER TABLE PRESCRICAO ADD CONSTRAINT FK_PRESCRICAO2 FOREIGN KEY (idReceita) REFERENCES RECEITA (id);
+
+ALTER TABLE PACIENTE ADD CONSTRAINT checkEstadoUrgencia  check (estado_urgencia < 6 and estado_urgencia > 0 );
+ALTER TABLE PACIENTE ADD CONSTRAINT checkData_Nascimento  check (Data_Nascimento < current_date);
+
+ALTER TABLE FUNCIONARIO ADD CONSTRAINT checkData_admissao check (Data_admissao <= current_date);
+
+ALTER TABLE FUNCIONARIO ADD CONSTRAINT checkSalario check (salario > 0.0);
+
+ALTER TABLE ESPECIALIDADE ADD CONSTRAINT checkPreco_consulta check (preco_consulta >= 0.0);
+
+ALTER TABLE RECEITA ADD CONSTRAINT checkData_Realizacao check (Data_Realizacao <= current_date);

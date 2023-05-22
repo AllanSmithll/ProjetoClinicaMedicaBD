@@ -2,22 +2,25 @@
 create or replace function inserirFuncionario(
     matricula char(5),
     CPF char(11),
-    Nome varChar(50),
-    funcao varChar(15),
-    salario Decimal(10,2),
-    Data_nascimento date,
-    Data_admissao date,
 	Supervisor char(5) default NULL,
+    Nome varChar(50),
+	Data_nascimento date,
+	Data_admissao date,
+	idCargo integer default NULL,
+    percentualBonus int,
     crmInserir char(6) default NULL,
     espIdInserir int default NULL
 ) returns void as $$ 
     Begin 
-        if salario < 0.0 then RAISE EXCEPTION  'O valor não pode ser negativo.'; 
+        if percentualBonus < 0 then RAISE EXCEPTION  'O valor não pode ser negativo.'; 
         end if;
-    	IF age(Data_Nascimento) < interval '18 years' THEN 
+    	IF age(Data_nascimento) < interval '18 years' THEN 
         	RAISE EXCEPTION 'O funcionário é menor de idade.'; 
     	END IF;
-        insert into FUNCIONARIO values(matricula, cpf, nome, funcao, salario, Supervisor, Data_Nascimento, Data_admissao);
+        insert into FUNCIONARIO (matricula, CPF, Supervisor, Nome, Data_Nascimento,
+								 Data_Admissao, idCargo, percentualBonus)
+		values (matricula, CPF, Supervisor, Nome, Data_nascimento,
+									   Data_admissao, idCargo, percentualBonus);
         if crmInserir is not Null then 
         	insert into MEDICO values(upper(matricula), crmInserir, espIdInserir);
 		end if;
@@ -55,14 +58,16 @@ CREATE or replace Function inserirEspecialidade (
 returns void as $$
     Declare
         especialidadeCadastrada Especialidade.id%type;
+		e_new_id integer;
     Begin 
-        select E.id into especialidadeCadastrada from Especialidade E where E.descricao like lower(descricaoInserir);
+        select E.id into especialidadeCadastrada from Especialidade E where E.descricao ilike lower(descricaoInserir);
         if preco_consultaInserir < 0.0 then RAISE EXCEPTION 'O valor não pode ser negativo.'; 
         ELSE 
             IF especialidadeCadastrada IS NOT NULL THEN 
                 UPDATE Especialidade SET preco_consulta = preco_consultaInserir WHERE id = especialidadeCadastrada;
-            ELSE 
-                INSERT INTO Especialidade VALUES (default, lower(descricaoInserir), preco_consultaInserir);
+            ELSE
+				select coalesce(max(id)+1, 1) into e_new_id from especialidade;
+                INSERT INTO Especialidade VALUES (e_new_id, lower(descricaoInserir), preco_consultaInserir);
             END IF;
         END IF;
     end;
@@ -77,6 +82,44 @@ create or replace function inserirTelefonePaciente(
     end;
 $$LANGUAGE 'plpgsql';
 
+
+/*Dá para transformar em trigger*/
+create or replace function inserirRemedio(
+    nomeRemedio text
+) returns int as $$
+    
+    Declare
+        remedioNewId Remedio.id%type;
+
+    begin
+        select id into remedioNewId from Remedio r where lower(r.descricao) like lower(nomeRemedio);
+
+        if remedioNewId is Null then
+            select COALESCE(max(id) + 1, 1) into remedioNewId from remedio;
+            insert into Remedio values (remedioNewId,nomeRemedio);
+        end If;
+        
+        return remedioNewId;
+    end;
+
+    $$ LANGUAGE 'plpgsql';
+    
+
+create or replace function inserirPrescricao(
+    receitaId PRESCRICAO.idReceita%type,
+    remedioNome text
+)returns void as  $$
+    
+    Declare
+    remedioId Remedio.id%type;
+    begin
+
+        remedioId := inserirRemedio(remedioNome);
+        insert into PRESCRICAO values (receitaId, remedioId);
+
+    end; 
+    $$ LANGUAGE 'plpgsql';
+
 create or replace function inserirReceitaMedica(
     MatMedico char(5) ,
     CPFPaciente char(13) ,
@@ -85,13 +128,73 @@ create or replace function inserirReceitaMedica(
     Data_Validade date,
     remediosReceitados text[] DEFAULT '{}'
 ) returns void as $$
+    
     Declare
-        ReceitaId Receita.id%type;
+        receitaId Receita.id%type;
 		 v_remedio TEXT;
+    
     Begin
-        INSERT INTO Receita  VALUES (default, MatMedico, CPFPaciente, Descricao, Data_Realizacao,Data_Validade) RETURNING id INTO ReceitaId;
-		FOREACH v_remedio IN ARRAY remediosReceitados LOOP
-			INSERT INTO REMEDIO_RECEITADO VALUES (ReceitaId, v_remedio);
-		END LOOP;
+
+        select COALESCE(max(id) +1, 1) into receitaId from Receita;
+
+        INSERT INTO Receita  VALUES (receitaId, MatMedico, CPFPaciente, Descricao, Data_Realizacao,Data_Validade);
+
+        if array_length(remediosReceitados,1) > 0 then 
+            
+            FOREACH v_remedio IN ARRAY remediosReceitados LOOP
+                PERFORM inserirPrescricao(receitaId, v_remedio);
+            END LOOP;
+        End If;
     END;
-$$LANGUAGE 'plpgsql';
+$$ LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION inserirCargo (
+    funcaoInserir varchar(45),
+    salario_baseInserir decimal(10, 2)
+) 
+RETURNS void AS $$
+DECLARE
+    cargoCadastrado cargo.id%TYPE;
+    c_new_id integer;
+BEGIN
+    SELECT C.id INTO cargoCadastrado
+    FROM cargo C
+    WHERE C.funcao ILIKE lower(funcaoInserir);
+    
+    IF salario_baseInserir < 0.0 THEN
+        RAISE EXCEPTION 'O salário base não pode ser negativo.';
+    ELSE
+        IF cargoCadastrado IS NOT NULL THEN
+            UPDATE cargo
+            SET salario_base = salario_baseInserir
+            WHERE id = cargoCadastrado;
+        ELSE
+            SELECT COALESCE(MAX(id) + 1, 1) INTO c_new_id FROM cargo;
+            INSERT INTO cargo (id, funcao, salario_base)
+            VALUES (c_new_id, lower(funcaoInserir), salario_baseInserir);
+			raise notice 'Cargo inserido com sucesso!';
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+create or replace function inserirCargo(
+	funcao text,
+	salario_base integer default 0
+) as $$
+
+    Declare
+    newId integer;
+    begin
+    newId:= select COALESCE(max(id)+ 1,1) from CARGO;
+
+    begin
+        insert into CARGO values(newId, lower(funcao), salario_base (decimal));
+    exception
+        when sqlstate 'P0003' then raise exception 'o cargo: % já existe!',funcao;
+    end;
+
+    end;
+$$LANGUAGE 'plpgsql'

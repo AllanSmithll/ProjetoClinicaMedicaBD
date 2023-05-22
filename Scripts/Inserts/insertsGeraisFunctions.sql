@@ -1,9 +1,21 @@
 -- Testes com as functions criadas
-select inserirEspecialidade('Oftalmologia',90.04);
-select inserirEspecialidade('Pediatria',120.05);
-select inserirEspecialidade('Otorrinolaringologia ',150.05);
-
+-- Especialidades
+select inserirEspecialidade('Oftalmologia',90.00);
+select inserirEspecialidade('Pediatria',120.00);
+select inserirEspecialidade('Otorrinolaringologia',150.00);
 select * from especialidade;
+
+-- Cargos
+select inserirCargo('Diretor', 8000.00);
+select inserirCargo('Pediatra', 5500.00);
+select inserirCargo('Atendente', 2500.00);
+select inserirCargo('Zelador', 2100.00);
+select inserirCargo('Motorista', 1600.00);
+select inserirCargo('Enfermeiro', 4750.00);
+select inserirCargo('Otorrino', 5000.00);
+select inserirCargo('Oftalmologo', 5400.00);
+
+select * from cargo;
 
 /*Supervisores*/
 select inserirFuncionario('JULME','12345678901','Julieta Capuleto','Diretora',5359.32,'03-01-1983', '12-05-2020');
@@ -44,15 +56,16 @@ select * from PACIENTE;
 select * from Numero_Telefone_Paciente;
 
 /*Receitas Médicas*/
-select inserirReceitaMedica('RUMCA', '82691696191', 'Óculos com lente de grau', '2023-04-30', '2023-05-30', '{"Lentes para miopia"}');
-select inserirReceitaMedica('WILTN', '81763444962', 'Óculos de proteção', '2023-04-30', '2023-05-30', '{"Proteção contra luz azul"}');
-select inserirReceitaMedica('AMFRO', '30729081210', 'Xarope para tosse', '2023-04-30', '2023-05-30', '{"Dextrometorfano", "Guaifenesina"}');
-select inserirReceitaMedica('FEJSA', '17583999459', 'Antibiótico para sinusite', '2023-04-30', '2023-05-30', '{"Amoxicilina", "Clavulanato de potássio"}');
-select inserirReceitaMedica('RUMCA', '61814352624', 'Óculos de grau', '2023-04-30', '2023-05-30', '{"Lentes para astigmatismo"}');
+select inserirReceitaMedica('RUMCA', '82691696191', 'Dificuldades para enxergar de perto e dores de cabeça.', '2023-04-30', '2023-05-30', '{"Dipirona","Lentes para miopia","lacribel"}');
+select inserirReceitaMedica('WILTN', '81763444962', 'Dores de cabeça ao se expor a luz solar', '2023-04-30', '2023-05-30', '{"Proteção contra luz azul"}');
+select inserirReceitaMedica('AMFRO', '30729081210', 'Dores no peito, dificuldade para respirar.', '2023-04-30', '2023-05-30', '{"Dextrometorfano", "Guaifenesina"}');
+select inserirReceitaMedica('FEJSA', '17583999459', 'Dificuldade para respirar.', '2023-04-30', '2023-05-30', '{"Amoxicilina", "Clavulanato de potássio"}');
+select inserirReceitaMedica('RUMCA', '61814352624', 'Dificuldades para enxergar ', '2023-04-30', '2023-05-30', '{"Lentes para astigmatismo"}');
 select inserirReceitaMedica('METIA', '98521676000', 'Vacina contra sarampo', '2023-04-30', '2023-05-30', '{"Tríplice viral"}');
 select inserirReceitaMedica('LOSJF', '82691692345', 'Vacina contra rubéola', '2023-04-30', '2023-05-30', '{"Tríplice viral"}');
 select inserirReceitaMedica('AMFRO', '73536904461', 'Medicação para alergia', '2023-05-01', '2023-06-01', '{"Clorfeniramina"}');
 select inserirReceitaMedica('FEJSA', '24874727359', 'Tratamento para labirintite', '2023-04-30', '2023-05-15', '{"Dramin", "Betahistina"}');
-select inserirReceitaMedica('METIA', '00593248718', 'Anticoncepcional oral', '2023-04-30', '2024-04-30', '{"Diane 35"}');
+select inserirReceitaMedica('METIA', '00593248718', 'Anticoncepcional oral', '2023-04-30', '2024-04-30', '{"Diane 35","Dipirona" }');
+
 select * from receita;
-select * from remedio_receitado;
+select * from remedio;
