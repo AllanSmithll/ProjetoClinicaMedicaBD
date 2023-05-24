@@ -16,16 +16,18 @@ CREATE TABLE Numero_Telefone_Paciente(
     PRIMARY KEY (pacienteCPF, Numero_telefone)
 );
 
+
 CREATE TABLE FUNCIONARIO (
-    matricula char(5) Not Null PRIMARY KEY,
-    CPF char(11) Not Null UNIQUE,
+    matricula char(5) NOT NULL PRIMARY KEY,
+    CPF char(11) NOT NULL UNIQUE,
     Supervisor char(5),
-	Nome varChar(50) Not Null,
-    Data_nascimento date Not Null,
-    Data_admissao date Not Null,
-	idCargo int Not Null,
-	percentual_bonus int Not Null
+    Nome varchar(50) NOT NULL,
+    Data_nascimento date NOT NULL,
+    Data_admissao date NOT NULL,
+    idCargo int NOT NULL,
+    percentual_bonus int NOT NULL
 );
+
 
 CREATE TABLE CARGO (
 	id serial PRIMARY KEY Not Null,
@@ -56,7 +58,7 @@ CREATE TABLE RECEITA(
 
 CREATE TABLE REMEDIO(
     id serial Not Null PRIMARY KEY,
-    descricao text Not Null
+    descricao text UNIQUE Not Null 
 );
 
 CREATE TABLE PRESCRICAO (
@@ -104,14 +106,15 @@ ALTER TABLE PRESCRICAO ADD CONSTRAINT FK_PRESCRICAO1
     FOREIGN KEY (idRemedio)
     REFERENCES REMEDIO (id);
 
+
+
 ALTER TABLE PRESCRICAO ADD CONSTRAINT FK_PRESCRICAO2 FOREIGN KEY (idReceita) REFERENCES RECEITA (id);
 
 ALTER TABLE PACIENTE ADD CONSTRAINT checkEstadoUrgencia  check (estado_urgencia < 6 and estado_urgencia > 0 );
-ALTER TABLE PACIENTE ADD CONSTRAINT checkData_Nascimento  check (Data_Nascimento < current_date);
 
 ALTER TABLE FUNCIONARIO ADD CONSTRAINT checkData_admissao check (Data_admissao <= current_date);
 
-ALTER TABLE FUNCIONARIO ADD CONSTRAINT checkSalario check (salario > 0.0);
+ALTER TABLE CARGO ADD CONSTRAINT checkSalarioBase check (salario_base > 0.0);
 
 ALTER TABLE ESPECIALIDADE ADD CONSTRAINT checkPreco_consulta check (preco_consulta >= 0.0);
 
